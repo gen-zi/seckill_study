@@ -1,0 +1,150 @@
+server:
+  # 应用服务 WEB 访问端口
+  port: 8081
+spring:
+  application:
+    # 应用名称
+    name: demo
+  #数据源配置
+  datasource:
+    # 数据库驱动：
+    driver-class-name: com.mysql.jdbc.Driver
+    # 数据源名称
+    name: defaultDataSource
+    # 数据库用户名&密码：
+    password: 123456
+    username: root
+    # 数据库连接地址
+    url: jdbc:mysql://localhost:3306/seckill?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    # THYMELEAF (ThymeleafAutoConfiguration)
+    hikari:
+      #连接池名字
+      pool-name: DateHikariCP
+      #最小连接数
+      minimum-idle: 5
+      #空闲连接存活最大时间
+      idle-timeout: 1800000
+      #最大连接数
+      maximum-pool-size: 10
+      #从连接池返回的连接自动提交
+      auto-commit: true
+      #连接最大存活时间，0表永久，默认10分钟
+      max-lifetime: 1800000
+      #连接超时时间
+      connection-timeout: 30000
+      #测试连接是否可用
+      connection-test-query: SELECT 1
+
+  #模板引擎配置
+  thymeleaf:
+    # 关闭模板缓存（默认值： true ，为了实现动态变化）
+    cache: false
+    # 检查模板是否存在，然后再呈现
+    check-template: true
+    # 检查模板位置是否正确（默认值 :true ）
+    check-template-location: true
+    #Content-Type 的值（默认值： text/html ）
+    content-type: text/html
+    # 开启 MVC Thymeleaf 视图解析（默认值： true ）
+    enabled: true
+    # 模板编码
+    encoding: UTF-8
+    # 要被排除在解析之外的视图名称列表，⽤逗号分隔
+    excluded-view-names: ''
+    # 要运⽤于模板之上的模板模式。另⻅ StandardTemplate-ModeHandlers( 默认值： HTML5)
+    mode: HTML5
+    # 在构建 URL 时添加到视图名称前的前缀（默认值： classpath:/templates/ ）
+    prefix: classpath:/templates/
+    # 在构建 URL 时添加到视图名称后的后缀（默认值： .html ）
+    suffix: .html
+
+  #redis配置
+  redis:
+    #服务器地址
+    host: 39.105.115.54
+    #超时时间
+    timeout: 100000ms
+    #端口
+    port: 6379
+    #数据库
+    database: 1
+    #密码
+    password: "123456"
+
+    lettuce:
+      pool:
+        #最大连接阻塞等待时间
+        max-wait: 10000ms
+        #最大连接数
+        max-active: 1024
+        #最大空闲连接数
+        max-idle: 200
+        #最小空闲连接数
+        min-idle: 5
+
+  #静态资源配置
+  resources:
+    #启动静态资源处理，默认启动
+    add-mappings: true
+    cache:
+      cachecontrol:
+        #缓存响应时间， 单位：秒
+        max-age: 3600
+    chain:
+      #启用资源链缓存，默认启动
+      cache: true
+      #启用资源链，默认禁用
+      enabled: true
+      #启用压缩资源解析，默认禁用
+      compressed: true
+      #启用H5应用缓存，默认禁用
+      html-application-cache: true
+    #静态资源位置，默认有classpath:/static/,classpath:/public/,classpath:/META_INF/resources/,classpath:/resources/
+    static-locations: classpath:/static/
+
+  #RabbitMQ配置
+  rabbitmq:
+    #主机号
+    host: 39.105.115.54
+    #端口号
+    port: 5672
+    #用户名，默认guest
+    username: guest
+    #密码，默认guest
+    password: guest
+    #虚拟主机
+    virtual-host: /
+    listener:
+      simple:
+        #最小消费者数量
+        concurrency: 10
+        #最大消费者数量
+        max-concurrency: 10
+        #启动时是否启动容器，默认启动
+        auto-startup: true
+        #被拒绝时是否重新进入队列
+        default-requeue-rejected: true
+    template:
+      retry:
+        #重新发布，默认false
+        enabled: true
+        #重试时间，默认1000ms
+        initial-interval: 1000
+        #最大重试次数，默认3
+        max-attempts: 3
+        #重试最大时间间隔， 默认10000ms
+        max-interval: 10000
+        #重试间隔的乘数。比如配2.0 第一次等10s，第二次等20s，第三次等40s
+        multiplier: 1.0
+
+#mybatis-plus配置
+mybatis-plus:
+  #配置xml映射文件位置
+  mapper-locations: classpath*:/mapper/*Mapper.xml
+  #配置返回数据类型别名
+  type-aliases-package: com.example.seckill.pojo
+
+#mybatis的SQL打印
+logging:
+  level:
+    com.example.seckill.mapper: debug
