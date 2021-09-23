@@ -24,9 +24,12 @@ public enum RespBeanEnum {
     MOBILE_ERROR(500212, "手机号码格式错误"),
     BIND_ERROR(500213, "验证错误"),
 
-    //秒杀功能
+    //秒杀功能5003xx
     STOCK_ERROR(500300, "库存不足，秒杀失败"),
-    REPEATED_ERROR(500301, "用户已购买过，禁止重复购买");
+    REPEATED_ERROR(500301, "用户已购买过，禁止重复购买"),
+
+    //安全5004xx
+    ILLEGAL_ACCESS(500400,"非法访问，请重新尝试");
 
     private final int code;
     private final String message;

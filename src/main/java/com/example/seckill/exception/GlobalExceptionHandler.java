@@ -2,7 +2,6 @@ package com.example.seckill.exception;
 
 import com.example.seckill.vo.RespBean;
 import com.example.seckill.vo.RespBeanEnum;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -27,8 +26,6 @@ public class GlobalExceptionHandler {
             RespBean respBean = RespBean.error(RespBeanEnum.BIND_ERROR);
             respBean.setMessage("参数校验异常:" + ex.getBindingResult().getAllErrors().get(0).getDefaultMessage());
             return respBean;
-        }else if (e instanceof DuplicateKeyException){
-            return RespBean.error(RespBeanEnum.REPEATED_ERROR);
         }
         e.printStackTrace();
         return RespBean.error(RespBeanEnum.ERROR);

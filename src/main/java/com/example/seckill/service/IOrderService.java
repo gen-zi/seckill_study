@@ -21,4 +21,8 @@ public interface IOrderService extends IService<Order> {
     OrderDetail getOrderDetailById(Long orderId);
 
     Long getResult(User user, Long goodsId);
+
+    boolean checkPath(String path, User user, Long goodsId);
+
+    String createPath(User user, Long goodsId);
 }

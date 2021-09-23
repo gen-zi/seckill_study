@@ -43,7 +43,7 @@
                  <!-- 一定要注释调form标签， 不然点了按钮不会走doSeckill()方法 -->
 <!--               <form id="seckillForm" method="post" action="/seckill/doSeckill">-->
 <!--               </form>-->
-                 <button class="btn btn-primary btn-block" id="buyButton" onclick="doSeckill()">立即秒杀</button>
+                 <button class="btn btn-primary btn-block" id="buyButton" onclick="getPath()">立即秒杀</button>
                  <input type="hidden" name="goodsId" id="goodsId"/>
              </td>
            </tr>
@@ -68,9 +68,32 @@
         // countDown();
     });
 
-    function doSeckill() {
+    function getPath(){
+        var goodsId = $("#goodsId").val();
+        g_showLoading();
         $.ajax({
-            url: "/seckill/doSeckill",
+            url: "/seckill/path",
+            type: "GET",
+            data: {
+                goodsId: goodsId,
+            },
+            success: function (data) {
+                if (data.code == 200){
+                    var path = data.obj;
+                    doSeckill(path);
+                }else {
+                    layer.msg(data.message);
+                }
+            },
+            error: function (){
+                layer.msg("非法请求，请重新尝试");
+            }
+        })
+    }
+
+    function doSeckill(path) {
+        $.ajax({
+            url: "/seckill/" + path +"/doSeckill",
             type: "POST",
             data: {
                 goodsId:$("#goodsId").val(),

@@ -18,6 +18,7 @@ target/
 *.iws
 *.iml
 *.ipr
+GitHub_token.txt
 
 ### NetBeans ###
 /nbproject/private/

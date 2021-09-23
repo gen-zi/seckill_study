@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -124,23 +125,70 @@ public class SecKillController implements InitializingBean {
 //        return RespBean.success(order);
 //    }
 
+//    /**
+//     * 相对于2.0,做了判断库存的优化，直接将库存数量放到缓存中操作，在缓存中做预减
+//     * @param user
+//     * @param goodsId
+//     * @return RespBean
+//     * @version 3.0
+//     */
+//    @RequestMapping(value = "/doSeckill", method = RequestMethod.POST)
+//    @ResponseBody
+//    public RespBean doSecKill(User user, Long goodsId){
+//        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+//
+//        //判断是否登录
+//        if (null == user){
+//            return RespBean.error(RespBeanEnum.SESSION_ERROR);
+//        }
+//
+//        if (!emptyStockMap.get(goodsId)) {
+//            //判断存储是否足够，直接用缓存判断
+//            Long stock = valueOperations.decrement("seckillGoods:" + goodsId);
+//            if (stock < 0) {
+//                emptyStockMap.put(goodsId, true);
+//                valueOperations.increment("seckillGoods:" + goodsId);
+//                return RespBean.error(RespBeanEnum.STOCK_ERROR);
+//            }
+//        }else {
+//            return RespBean.error(RespBeanEnum.STOCK_ERROR);
+//        }
+//
+//        //判断是否重复购买，这样在高并发情况下还是会出现重复购买的的情况（同一个用户同时发多个请求，这时还没有订单，那那些请求就有可能过下面的判断）
+//        //一种办法是在生产订单时对用户id和商品id加唯一索引，如果生产订单失败就说明了有用户重复购买
+//        String seckillOrderJSON = (String) valueOperations.get("seckillOrder:" + goodsId + ":" + user.getId());
+//        //这里没必要转成对象
+//        if (!StringUtils.isEmpty(seckillOrderJSON)){
+//            return RespBean.error(RespBeanEnum.REPEATED_ERROR);
+//        }
+//
+//        //执行秒杀(减库存，生订单)
+//        SeckillMessage seckillMessage = new SeckillMessage();
+//        seckillMessage.setUser(user);
+//        seckillMessage.setGoodsId(goodsId);
+//        mqSender.send(JsonUtil.object2JsonStr(seckillMessage));
+//        return RespBean.success(0);
+//    }
+
     /**
-     * 相对于2.0,做了判断库存的优化，直接将库存数量放到缓存中操作，在缓存中做预减
+     * 相对于3.0,增加了安全优化，将秒杀接口隐藏，通过暴露的接口间接获得秒杀接口
      * @param user
      * @param goodsId
      * @return RespBean
-     * @version 3.0
+     * @version 4.0
      */
-    @RequestMapping(value = "/doSeckill", method = RequestMethod.POST)
+    @RequestMapping(value = "/{path}/doSeckill", method = RequestMethod.POST)
     @ResponseBody
-    public RespBean doSecKill(User user, Long goodsId){
+    public RespBean doSecKill(@PathVariable String path, User user, Long goodsId){
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
 
         //判断是否登录
         if (null == user){
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
-
+        if (!orderService.checkPath(path, user, goodsId)){
+            return RespBean.error(RespBeanEnum.ILLEGAL_ACCESS);
+        }
         if (!emptyStockMap.get(goodsId)) {
             //判断存储是否足够，直接用缓存判断
             Long stock = valueOperations.decrement("seckillGoods:" + goodsId);
@@ -168,6 +216,22 @@ public class SecKillController implements InitializingBean {
         mqSender.send(JsonUtil.object2JsonStr(seckillMessage));
         return RespBean.success(0);
     }
+
+
+    @RequestMapping(value = "/path", method = RequestMethod.GET)
+    @ResponseBody
+    public RespBean getPath(User user, Long goodsId){
+        //判断用户
+        if (user == null){
+            return RespBean.error(RespBeanEnum.SESSION_ERROR);
+        }
+
+        //生成路径信息
+        String path = orderService.createPath(user, goodsId);
+        return RespBean.success(path);
+    }
+
+
 
     @RequestMapping(value = "/result", method = RequestMethod.GET)
     @ResponseBody

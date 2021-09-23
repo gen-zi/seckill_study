@@ -13,12 +13,16 @@ import com.example.seckill.service.IOrderService;
 import com.example.seckill.service.ISeckillGoodsService;
 import com.example.seckill.service.ISeckillOrderService;
 import com.example.seckill.utils.JsonUtil;
+import com.example.seckill.utils.MD5Util;
+import com.example.seckill.utils.UUIDUtil;
 import com.example.seckill.vo.GoodsVo;
 import com.example.seckill.vo.OrderDetail;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.util.StringUtils;
 
 import java.util.Date;
 
@@ -111,7 +115,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         seckillOrder.setUserId(user.getId());
         seckillOrder.setGoodsId(goodsVo.getId());
         //这里如果有重复会抛出DuplicateKeyException异常，我这里就用全局异常处理处理了
-        seckillOrderService.save(seckillOrder);
+        try {
+            seckillOrderService.save(seckillOrder);
+        } catch (Exception e) {
+            if (e instanceof DuplicateKeyException){
+                return null;
+            }
+        }
         redisTemplate.opsForValue().set("seckillOrder:"+goodsVo.getId()+":"+user.getId(),
                 JsonUtil.object2JsonStr(seckillOrder));
         return order;
@@ -139,6 +149,38 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }else {
             return 0L;
         }
+    }
+
+    /**
+     * 验证路径是否正确
+     * @param path
+     * @param user
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public boolean checkPath(String path, User user, Long goodsId) {
+        if (StringUtils.isEmpty(path)){
+            return false;
+        }
+        String path0 = (String) redisTemplate.opsForValue().get("seckillPath:" + user.getId() + ":" + goodsId);
+        if (path.equals(path0)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     *  生成秒杀路径， 使用UUID+MD5生成
+     * @param user
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public String createPath(User user, Long goodsId) {
+        String path = MD5Util.md5(UUIDUtil.getUUID() + goodsId);
+        redisTemplate.opsForValue().set("seckillPath:" + user.getId() + ":" + goodsId, path);
+        return path;
     }
 
 
