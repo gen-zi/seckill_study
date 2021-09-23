@@ -10,20 +10,24 @@ import com.example.seckill.utils.JsonUtil;
 import com.example.seckill.vo.GoodsVo;
 import com.example.seckill.vo.RespBean;
 import com.example.seckill.vo.RespBeanEnum;
+import com.pig4cloud.captcha.SpecCaptcha;
+import com.pig4cloud.captcha.base.Captcha;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.util.StringUtils;
 
+import javax.servlet.http.HttpServletResponse;
+import java.awt.*;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author lgy
@@ -34,6 +38,7 @@ import java.util.Map;
  */
 @Controller
 @RequestMapping("/seckill")
+@Slf4j
 public class SecKillController implements InitializingBean {
 
     @Autowired
@@ -187,7 +192,7 @@ public class SecKillController implements InitializingBean {
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
         if (!orderService.checkPath(path, user, goodsId)){
-            return RespBean.error(RespBeanEnum.ILLEGAL_ACCESS);
+            return RespBean.error(RespBeanEnum.ILLEGAL_ACCESS_ERROR);
         }
         if (!emptyStockMap.get(goodsId)) {
             //判断存储是否足够，直接用缓存判断
@@ -217,15 +222,62 @@ public class SecKillController implements InitializingBean {
         return RespBean.success(0);
     }
 
+    /**
+     * 获取验证码
+     * @param user
+     * @param goodsId
+     * @param response
+     */
+    @RequestMapping(value = "/captcha", method = RequestMethod.GET)
+    public void createCaptcha(User user, @RequestParam("goodsId") Long goodsId, HttpServletResponse response) {
+        // 设置请求头为输出图片类型
+        response.setContentType("image/gif");
+        response.setHeader("Pragma", "No-cache");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setDateHeader("Expires", 0);
 
+        // 三个参数分别为宽、高、位数
+        SpecCaptcha specCaptcha = new SpecCaptcha(130, 48, 5);
+        // 设置字体
+        specCaptcha.setFont(new Font("Verdana", Font.PLAIN, 32));  // 有默认字体，可以不用设置
+        // 设置类型，纯数字、纯字母、字母数字混合，默认数字字母混合，默认区分大小写，很难通过，用数字和大写字母组合6
+        specCaptcha.setCharType(Captcha.TYPE_NUM_AND_UPPER);
+
+        //这里有时存进redis的会将goodsId为null？
+        //刷新页面就会得不到goodsId，直接点击不会
+        //是因为前端的在页面加载完进行的函数中直接在里面调用了生成验证码的函数，虽然是在加载细节函数后面调用，但是那个时候就是拿不到goodsId
+        //直接将生成函数移到渲染完后面调用就可以了，确保了goodsId是有值的
+        redisTemplate.opsForValue()
+                .set("captcha:" + user.getId()+":" + goodsId, specCaptcha.text(), 180, TimeUnit.SECONDS);
+
+        // 输出图片流
+        try {
+            specCaptcha.out(response.getOutputStream());
+        } catch (IOException e) {
+            log.info("验证码生成失败", e.getMessage());
+        }
+    }
+
+    /**
+     * 验证验证码，获取秒杀路径
+     * @param user
+     * @param goodsId
+     * @param captcha
+     * @return
+     */
     @RequestMapping(value = "/path", method = RequestMethod.GET)
     @ResponseBody
-    public RespBean getPath(User user, Long goodsId){
+    public RespBean getPath(User user, Long goodsId, String captcha){
         //判断用户
         if (user == null){
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
 
+        //二次验证验证码
+        boolean result = orderService.checkCaptcha(captcha, user, goodsId);
+        if (!result){
+            return RespBean.error(RespBeanEnum.CAPTCHA_ERROR);
+        }
         //生成路径信息
         String path = orderService.createPath(user, goodsId);
         return RespBean.success(path);

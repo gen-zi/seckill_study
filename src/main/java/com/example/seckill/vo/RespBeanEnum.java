@@ -29,7 +29,9 @@ public enum RespBeanEnum {
     REPEATED_ERROR(500301, "用户已购买过，禁止重复购买"),
 
     //安全5004xx
-    ILLEGAL_ACCESS(500400,"非法访问，请重新尝试");
+    ILLEGAL_ACCESS_ERROR(500400,"非法访问，请重新尝试"),
+    CAPTCHA_ERROR(500401, "验证码错误，请重新验证");
+
 
     private final int code;
     private final String message;

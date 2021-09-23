@@ -25,4 +25,6 @@ public interface IOrderService extends IService<Order> {
     boolean checkPath(String path, User user, Long goodsId);
 
     String createPath(User user, Long goodsId);
+
+    boolean checkCaptcha(String captcha, User user, Long goodsId);
 }

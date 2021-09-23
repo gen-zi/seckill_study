@@ -183,5 +183,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         return path;
     }
 
+    /**
+     * 校验验证码
+     * @param captcha
+     * @param user
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public boolean checkCaptcha(String captcha, User user, Long goodsId) {
+        if (StringUtils.isEmpty(captcha))
+            return false;
+        String captcha0 = (String) redisTemplate.opsForValue().get("captcha:" + user.getId() + ":" + goodsId);
+        return captcha.equals(captcha0);
+    }
+
 
 }
