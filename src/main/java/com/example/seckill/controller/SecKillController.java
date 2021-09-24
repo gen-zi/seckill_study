@@ -1,5 +1,6 @@
 package com.example.seckill.controller;
 
+import com.example.seckill.config.AccessLimit;
 import com.example.seckill.pojo.User;
 import com.example.seckill.rabbitmq.MQSender;
 import com.example.seckill.rabbitmq.SeckillMessage;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.thymeleaf.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.io.IOException;
@@ -265,13 +267,27 @@ public class SecKillController implements InitializingBean {
      * @param captcha
      * @return
      */
+    @AccessLimit(seconds=10, maxCount=5, needLogin=true)
     @RequestMapping(value = "/path", method = RequestMethod.GET)
     @ResponseBody
-    public RespBean getPath(User user, Long goodsId, String captcha){
+    public RespBean getPath(User user, Long goodsId, String captcha, HttpServletRequest request){
         //判断用户
         if (user == null){
             return RespBean.error(RespBeanEnum.SESSION_ERROR);
         }
+
+//        //简单的接口限流，才用计数器的方法，如果多了接口都要限流，那每一个接口方法都这样加一段太冗余了
+//        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+//        String uri = request.getRequestURI();
+//        String key = uri + ":" + user.getId();
+//        Integer count = (Integer) valueOperations.get(key);
+//        if (count == null){
+//            valueOperations.set(key, 0, 20, TimeUnit.SECONDS);
+//        }else if (count < 5){
+//            valueOperations.increment(key);
+//        }else {
+//            return RespBean.error(RespBeanEnum.FREQUENT_ACCESS_ERROR);
+//        }
 
         //二次验证验证码
         boolean result = orderService.checkCaptcha(captcha, user, goodsId);

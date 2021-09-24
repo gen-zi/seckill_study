@@ -15,7 +15,7 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum RespBeanEnum {
     //通用
-    SUCCESS(200, "success"),
+    SUCCESS_ERROR(200, "success"),
     ERROR(500, "服务端异常"),
 
     //登录功能 5002xx
@@ -30,7 +30,8 @@ public enum RespBeanEnum {
 
     //安全5004xx
     ILLEGAL_ACCESS_ERROR(500400,"非法访问，请重新尝试"),
-    CAPTCHA_ERROR(500401, "验证码错误，请重新验证");
+    CAPTCHA_ERROR(500401, "验证码错误，请重新验证"),
+    FREQUENT_ACCESS_ERROR(500402, "访问过于频繁，请稍后重试");
 
 
     private final int code;

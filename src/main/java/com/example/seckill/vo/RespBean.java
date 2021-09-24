@@ -20,11 +20,11 @@ public class RespBean {
     private Object obj;
 
     public static RespBean success(){
-        return new RespBean(RespBeanEnum.SUCCESS.getCode(), RespBeanEnum.SUCCESS.getMessage(), null);
+        return new RespBean(RespBeanEnum.SUCCESS_ERROR.getCode(), RespBeanEnum.SUCCESS_ERROR.getMessage(), null);
     }
 
     public static RespBean success(Object obj){
-        return new RespBean(RespBeanEnum.SUCCESS.getCode(), RespBeanEnum.SUCCESS.getMessage(), obj);
+        return new RespBean(RespBeanEnum.SUCCESS_ERROR.getCode(), RespBeanEnum.SUCCESS_ERROR.getMessage(), obj);
     }
 
     public static RespBean error(RespBeanEnum respBeanEnum){

@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class JsonUtil {
 
-    private static ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
     * 将对象转换成json字符串
